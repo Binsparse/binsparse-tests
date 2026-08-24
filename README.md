@@ -1,99 +1,150 @@
-# Test Suite for Binsparse Compliance
+# Binsparse Compliance Test Suite
 
-This is the test suite for libraries supporting the [Binsparse](https://github.com/GraphBLAS/binsparse-specification) file format.
+This repository contains the compliance test suite for libraries that support the
+[Binsparse file format](https://github.com/GraphBLAS/binsparse-specification).
 
-# Quickstart
+## Quick start
 
-To run the tests, install the repo using pixi
+Install the project with [Pixi](https://pixi.sh/):
 
-```
-pixi install .
-```
-
-## Specifying the parser to test
-
-Libraries must implement sparse array format conversion in order to be tested. Three executables are required:
-
-`npy_to_binsparse [tensor_in] [pattern_in] [fill_value_in] [header_in] [tensor_out]`
-
-where `tensor_in` is an npy file holding the input tensor values in a dense format, and `pattern_in` is an npy file holding the description of which fill values are to be stored explicitly. `header_in` holds a partial binsparse header whose fields should be present in the output, the executable should complete the conversion.
-
-`binsparse_to_npy [tensor_in] [tensor_out] [pattern_out] [fill_value_out]`
-
-where `tensor_in` is a binsparse file holding the input tensor and `tensor_out` and `pattern_out` are npy files holding the output tensor values, whether each value was implicit, `fill_value_out` holds output fill value.
-
-`binsparse_to_binsparse [tensor_in] [tensor_out]`
-
-where `tensor_in` is a binsparse file holding the input tensor and `tensor_out` is a binsparse file holding the output. The library should convert to its internal representation in the middle.
-
-The executables can be specified with the "NPY_TO_BINSPARSE", "BINSPARSE_TO_NPY", and "BINSPARSE_TO_BINSPARSE" environment variables, e.g.:
-
-```
-$ export NPY_TO_BINSPARSE=npy_to_binsparse
-$ export BINSPARSE_TO_NPY=npy_to_binsparse
+```console
+pixi install
 ```
 
-## Specifying the Binsparse Version
+## Configure the library under test
 
-You can specify the Binsparse version to use when testing via the BINSPARSE_TESTS_VERSION environment variable, e.g.
+Libraries must provide three executables that convert sparse arrays between NumPy
+and Binsparse representations.
 
+### `npy_to_binsparse`
+
+```text
+npy_to_binsparse <tensor_in> <pattern_in> <fill_value_in> <header_in> <tensor_out>
 ```
-$ export ARRAY_API_TESTS_VERSION="2023.12"
+
+| Argument | Description |
+| --- | --- |
+| `tensor_in` | `.npy` file containing the dense input tensor |
+| `pattern_in` | `.npy` file indicating which values are stored explicitly |
+| `fill_value_in` | `.npy` file containing the input tensor's fill value |
+| `header_in` | Partial Binsparse header whose fields must appear in the output |
+| `tensor_out` | Destination Binsparse file |
+
+The executable must complete the partial header while preserving all fields supplied
+in `header_in`.
+
+### `binsparse_to_npy`
+
+```text
+binsparse_to_npy <tensor_in> <tensor_out> <pattern_out> <fill_value_out>
+```
+
+| Argument | Description |
+| --- | --- |
+| `tensor_in` | Input Binsparse file |
+| `tensor_out` | Destination `.npy` file containing the dense tensor values |
+| `pattern_out` | Destination `.npy` file indicating which values were stored explicitly |
+| `fill_value_out` | Destination `.npy` file containing the tensor's fill value |
+
+### `binsparse_to_binsparse`
+
+```text
+binsparse_to_binsparse <tensor_in> <tensor_out>
+```
+
+| Argument | Description |
+| --- | --- |
+| `tensor_in` | Input Binsparse file |
+| `tensor_out` | Destination Binsparse file |
+
+The library must convert the input to its internal representation before writing the
+output.
+
+Set the executable paths with environment variables:
+
+```console
+export NPY_TO_BINSPARSE=npy_to_binsparse
+export BINSPARSE_TO_NPY=binsparse_to_npy
+export BINSPARSE_TO_BINSPARSE=binsparse_to_binsparse
+```
+
+### Select a Binsparse version
+
+Set `BINSPARSE_TESTS_VERSION` to choose the specification version used by the tests:
+
+```console
+export BINSPARSE_TESTS_VERSION="2023.12"
 ```
 
 ## Run the suite
 
-You may run any of the following targets to test your executable against the appropriate binary container:
+Run the environment for the binary container you want to test:
 
+```console
+pixi run -e test-hdf5 test
+pixi run -e test-zarr test
+pixi run -e test-npz test
 ```
-pixi test-hdf5
-pixi test-zarr
-pixi test-npz
+
+## Definition of conformance
+
+The suite tests whether a library preserves the semantic meaning of arrays stored in
+Binsparse files. Two arrays are equivalent when:
+
+1. Their dimensions, data types, and values match at every corresponding index.
+2. They have the same explicit storage pattern. An explicitly stored fill value is
+   semantically distinct from an implicit fill value.
+3. They have the same fill value, even when neither array stores any values implicitly.
+
+Storage format, index type, and whether values use an iso representation are not
+semantically meaningful, but should be preserved through a roundtrip.
+
+`npy_to_binsparse` tests whether the library can construct an equivalent Binsparse
+tensor from its dense values, explicit storage pattern, fill value, and requested
+header fields. `binsparse_to_binsparse` tests whether the library's internal
+representation can represent tensors read from different Binsparse formats. Together,
+these conversions test writing and round-tripping through the library's internal
+state. The direct `binsparse_to_npy` tests provide clearer diagnostics when a
+conversion fails.
+
+### Test generation
+
+The suite uses [Hypothesis](https://hypothesis.readthedocs.io/en/latest/) to generate
+a diverse set of random matrices. It tests every predefined alias and a random set of
+custom formats.
+
+### Binary container equivalence
+
+Binary containers can include metadata unrelated to array semantics. For example,
+HDF5 records timestamps. The suite compares only relevant properties and ignores
+details such as timestamps and JSON field ordering.
+
+## Skip or mark expected failures
+
+Use skip and XFAIL files to identify tests that should be skipped or expected to fail.
+XFAIL tests still run and are reported as XPASS when they unexpectedly pass.
+
+The default files are `skips.txt` and `fails.txt` in the repository root. Use
+`--skips-file` and `--xfails-file` to select other files. Either option may be repeated;
+entries from all supplied files are merged:
+
+```console
+pytest \
+  --skips-file skips-general.txt \
+  --skips-file skips-macos.txt \
+  binsparse_tests/
 ```
 
-# Our definition of conformance
+Each file contains test ID substrings, one per line. Empty lines and lines beginning
+with `#` are ignored.
 
-We are interested in array libraries conforming to the binsparse spec, and that they understand the "semantic meaning" of the arrays contained in binsparse files. We define two arrays to be "the same" under the following conditions:
-1. The value of the array at equivalent indices is the same (they are the same as dense arrays in dimension, value, and type)
-2. We consider implicit versus explicit zeros to be semantically meaningful, so two arrays mean the same thing if they store the same values.
-3. The arrays have the same "fill value," regardless of whether any elements are actually stored implicitly.
-
-
-Thus, npy_to_binsparse tests whether the library understands how to convert the dense, pattern, and fill components of a tensor into an equivalent binsparse file. 
-
-Array components like the storage format, whether values are iso, or the type of the indices, are not semantically meaningful. Still, binsparse_to_binsparse tests whether the libraries internal representation of a tensor distinguishes between different binsparse format representations.
-
-Together, npy_to_binsparse and binsparse_to_binsparse are enough to fully test that a library conforms to binsparse, as it can read a semantic representation to internal state, then to a given binsparse file. It can also roundtrip through the same internal state, which is enough. However, we also provide tests for binsparse_to_npy to make errors clearer.
-
-## Test generation
-
-We use [Hypothesis](https://hypothesis.readthedocs.io/en/latest/) to generate a diverse set of random matrices. We test all predefined aliases, and a random set of custom formats.
-
-## Binary container equivalence
-
-Comparing binary containers is sometimes complicated. HDF5, for example, records a time stamp in the output. The test suite comes equipped with utilities to compare only the relevant properties of binary containers, and ignore things like the ordering of fields in json.
-
-Skip or XFAIL test cases
-
-Test cases you want to skip can be specified in a skips or XFAILS file. The difference between skip and XFAIL is that XFAIL tests are still run and reported as XPASS if they pass.
-
-By default, the skips and xfails files are skips.txt and fails.txt in the root of this repository, but any file can be specified with the --skips-file and --xfails-file command line flags.
-
-Both flags can be given several times, in which case the files are merged. This is useful to keep entries which only apply to some platforms separate from the general ones:
-
-pytest --skips-file skips-general.txt --skips-file skips-macos.txt array_api_tests/
-
-The files should list the test ids to be skipped/xfailed. Empty lines and lines starting with # are ignored. The test id can be any substring of the test ids to skip/xfail.
-
-# skips.txt or xfails.txt
-# Line comments can be denoted with the hash symbol (#)
-
-# Skip specific test case, e.g. custom formats that are not CSF
+```text
+# Skip a specific test, such as a custom format that is not CSF.
 binsparse_tests/test_custom.py::test_sparse_sparse_dense
 
-# Skip specific test case parameter, e.g. you forgot to implement iso
-binsparse_tests/test_add[iso]
+# Skip a specific parameter, such as an unsupported iso representation.
+binsparse_tests/test_add.py::test_add[iso]
 
-# Skip module, e.g. no custom formats supported
+# Skip an entire module, such as all custom-format tests.
 binsparse_tests/test_custom.py
-
+```
