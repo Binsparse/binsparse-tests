@@ -5,6 +5,7 @@ requires-python = ">=3.11"
 version = "0.1.0"
 dependencies = [
     "numpy>=2.5.2,<3",
+    "binsparse @ git+https://github.com/Binsparse/binsparse-reference-python",
 ]
 
 [project.optional-dependencies]
