@@ -84,6 +84,14 @@ testpaths = ["binsparse_tests"]
 junit_family = "xunit2"
 strict_config = true
 strict_markers = true
+markers = [
+    "bool_values: generated values use bint8",
+    "signed_integer: generated values use a signed integer dtype",
+    "unsigned_integer: generated values use an unsigned integer dtype",
+    "floating: generated values use a floating dtype",
+    "complex_values: generated values use a complex dtype",
+    "iso: generated values use an iso[...] dtype",
+]
 
 [tool.pixi.feature.test.tasks.test]
 args = [

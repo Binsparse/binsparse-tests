@@ -2,6 +2,7 @@ import itertools
 from copy import deepcopy
 
 import numpy as np
+from hypothesis import assume
 from hypothesis import strategies as st
 
 VERSION = "0.1"
@@ -353,7 +354,25 @@ def predefined_headers(format_name, shape, pattern, **kwargs):
 
 
 @st.composite
-def npy_inputs(draw, n=None, max_rank=3, max_size=4, predefined_only=False):
+def npy_inputs(
+    draw,
+    n=None,
+    max_rank=3,
+    max_size=4,
+    predefined_only=False,
+    format_name=None,
+    values_dtypes=None,
+    index_dtypes=None,
+    pos_dtypes=None,
+    transpose=MISSING,
+    fill=MISSING,
+):
+    if format_name is not None:
+        format, default_transpose = predefined[format_name]
+        format_rank = rank(format)
+        if n is not None and n != format_rank:
+            raise ValueError(f"{format_name} has rank {format_rank}, not {n}")
+        n = format_rank
     if n is None and predefined_only:
         n = draw(st.sampled_from(sorted(predefined_by_rank)))
     elif n is None:
@@ -363,13 +382,21 @@ def npy_inputs(draw, n=None, max_rank=3, max_size=4, predefined_only=False):
 
     shape = draw(shapes(n, max_size=max_size))
 
-    if predefined_only:
+    if format_name is not None:
+        if transpose is MISSING:
+            transpose = default_transpose
+        else:
+            transpose = draw(as_strategy(transpose))
+    elif predefined_only:
         format_name = draw(st.sampled_from(predefined_by_rank[n]))
         format, transpose = predefined[format_name]
     else:
         format_name = None
         format = draw(formats(n))
-        transpose = draw(optional_transposes(n))
+        if transpose is MISSING:
+            transpose = draw(optional_transposes(n))
+        else:
+            transpose = draw(as_strategy(transpose))
 
     stored_shape = shape if transpose is None else tuple(shape[i] for i in transpose)
     stored_pattern = draw(patterns(format, stored_shape))
@@ -379,8 +406,16 @@ def npy_inputs(draw, n=None, max_rank=3, max_size=4, predefined_only=False):
         else np.transpose(stored_pattern, np.argsort(transpose))
     )
 
-    values_dtype = draw(value_datatypes(allow_iso=bool(np.any(pattern))))
-    fill = draw(st.sampled_from([None, True]))
+    if values_dtypes is None:
+        values_dtype = draw(value_datatypes(allow_iso=bool(np.any(pattern))))
+    else:
+        values_dtype = draw(as_strategy(values_dtypes))
+        if values_dtype.startswith("iso["):
+            assume(bool(np.any(pattern)))
+    if fill is MISSING:
+        fill = draw(st.sampled_from([None, True]))
+    else:
+        fill = draw(as_strategy(fill))
     fill_value = draw(scalar_values(unwrapped_dtype(values_dtype)))
     stored_values = draw(value_array(values_dtype, int(np.sum(pattern))))
     tensor = dense_from_pattern(shape, pattern, fill_value, stored_values)
@@ -388,6 +423,8 @@ def npy_inputs(draw, n=None, max_rank=3, max_size=4, predefined_only=False):
         fill_value,
         dtype=str_to_dtype[unwrapped_dtype(values_dtype)],
     )
+    index_dtype = draw(as_strategy("int64" if index_dtypes is None else index_dtypes))
+    pos_dtype = draw(as_strategy("int64" if pos_dtypes is None else pos_dtypes))
 
     if format_name is None:
         out_header = header(
@@ -395,6 +432,8 @@ def npy_inputs(draw, n=None, max_rank=3, max_size=4, predefined_only=False):
             shape,
             pattern,
             values_dtype,
+            index_dtype=index_dtype,
+            pos_dtype=pos_dtype,
             transpose=transpose,
             fill=fill,
         )
@@ -404,6 +443,8 @@ def npy_inputs(draw, n=None, max_rank=3, max_size=4, predefined_only=False):
             shape,
             pattern,
             values_dtype,
+            index_dtype=index_dtype,
+            pos_dtype=pos_dtype,
             fill=fill,
         )
     return tensor, pattern, fill_value, out_header
