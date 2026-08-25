@@ -6,6 +6,7 @@ version = "0.1.0"
 dependencies = [
     "numpy>=2.5.2,<3",
     "binsparse @ git+https://github.com/Binsparse/binsparse-reference-python",
+    "hypothesis>=6.165.10,<7",
 ]
 
 [project.optional-dependencies]
@@ -59,6 +60,9 @@ binsparse-tests = { path = ".", editable = true }
 
 [tool.pixi.feature.pre-commit.dependencies]
 python = ">=3.11"
+
+[tool.setuptools.packages.find]
+include = ["binsparse_tests*"]
 
 [tool.ruff.lint]
 select = ["F", "E", "W", "I", "B", "UP", "YTT", "BLE", "C4", "T10", "ISC", "ICN", "PIE", "PYI", "RSE", "RET", "SIM", "PGH", "FLY", "NPY", "PERF", "RUF022", "TID"]
