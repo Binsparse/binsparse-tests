@@ -13,8 +13,6 @@ from typing import Any
 import numpy as np
 from binsparse import cli as reference_cli
 
-from .generate import npy_inputs
-
 Command = str | Sequence[str]
 GeneratedInput = tuple[np.ndarray, np.ndarray, Any, Mapping[str, Any]]
 
@@ -52,23 +50,6 @@ def run_executables(
 
     with tempfile.TemporaryDirectory(dir=tmp_parent) as directory:
         _run_case(generated, commands, Path(directory), container_suffix)
-
-
-def run_generated_example(
-    *,
-    n: int | None = None,
-    max_rank: int = 3,
-    max_size: int = 4,
-    predefined_only: bool = False,
-    **kwargs: Any,
-) -> None:
-    generated = npy_inputs(
-        n=n,
-        max_rank=max_rank,
-        max_size=max_size,
-        predefined_only=predefined_only,
-    ).example()
-    run_executables(generated, **kwargs)
 
 
 def _run_case(
@@ -304,4 +285,4 @@ def _npy_paths(prefix: Path) -> tuple[Path, Path, Path]:
     )
 
 
-__all__ = ["run_executables", "run_generated_example"]
+__all__ = ["run_executables"]

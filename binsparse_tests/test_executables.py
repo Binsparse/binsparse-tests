@@ -7,15 +7,22 @@ from hypothesis import strategies as st
 from .generate import (
     boolean_value_datatypes,
     complex_datatypes,
+    datatypes,
     floating_datatypes,
+    formats,
     iso_datatypes,
     npy_inputs,
+    optional_transposes,
+    predefined,
     signed_integer_datatypes,
     unsigned_integer_datatypes,
 )
 from .run import run_executables
 
 MAX_EXAMPLES = 5
+DIMENSION = st.integers(min_value=0, max_value=4)
+SHAPE_1D = st.tuples(DIMENSION)
+SHAPE_2D = st.tuples(DIMENSION, DIMENSION)
 
 VALUE_DTYPE_STRATEGIES = [
     pytest.param(
@@ -52,7 +59,15 @@ def test_1_dim(
 ) -> None:
     if iso:
         values_dtypes = iso_datatypes(values_dtypes)
-    generated = data.draw(npy_inputs(n=1, values_dtypes=values_dtypes), label="generated")
+    generated = data.draw(
+        npy_inputs(
+            shape=SHAPE_1D,
+            format=formats(1),
+            datatypes=datatypes(values_dtypes),
+            transpose=optional_transposes(1),
+        ),
+        label="generated",
+    )
     run_executables(generated)
 
 
@@ -65,7 +80,15 @@ def test_2_dim(
 ) -> None:
     if iso:
         values_dtypes = iso_datatypes(values_dtypes)
-    generated = data.draw(npy_inputs(n=2, values_dtypes=values_dtypes), label="generated")
+    generated = data.draw(
+        npy_inputs(
+            shape=SHAPE_2D,
+            format=formats(2),
+            datatypes=datatypes(values_dtypes),
+            transpose=optional_transposes(2),
+        ),
+        label="generated",
+    )
     run_executables(generated)
 
 
@@ -79,7 +102,12 @@ def test_csr(
     if iso:
         values_dtypes = iso_datatypes(values_dtypes)
     generated = data.draw(
-        npy_inputs(format_name="CSR", values_dtypes=values_dtypes),
+        npy_inputs(
+            shape=SHAPE_2D,
+            format=st.just(predefined["CSR"][0]),
+            format_name=st.just("CSR"),
+            datatypes=datatypes(values_dtypes),
+        ),
         label="generated",
     )
     run_executables(generated)
