@@ -86,21 +86,23 @@ def complex_value_datatypes(n):
         "complex[float64]",
     ])
 
-def patterns(format, shape):
+def trees(format, shape):
     match format["level_desc"]:
         case "dense":
             rank = format["rank"]
-            subfibers = patterns(format["level"], shape[rank:])
+            subfibers = trees(format["level"], shape[rank:])
             return st.fixed_dictionaries(
                 {key:subfibers for key in itertools.product(shape[:rank])}
                 )
         case "sparse":
             rank = format["rank"]
-            subfibers = patterns(format["level"], shape[rank:])
+            subfibers = trees(format["level"], shape[rank:])
             return st.dictionaries(
                 st.tuples(*[st.integers(min_size=0, max_size=s) for s in shape[:rank]]),
                 subfibers
             )
+        case "element":
+            return None
         case _:
             raise ArgumentError("unrecognized")
 
@@ -122,3 +124,17 @@ def dtypes(N, format, index_dtypes, pos_dtypes, values_dtypes):
                 pass
     datatypes["values"] = values_dtypes
     return st.fixed_dictionaries(datatypes)
+
+@composite
+def patterns(draw, format, shape)
+    tree = draw(trees(format, shape))
+    arr = np.falses(shape)
+    def traverse(node, coord):
+        if node == None:
+            arr[coord] = True
+        else:
+            for k, v in node.items():
+                traverse(v, (*coord, *k))
+
+    traverse(tree, ())
+    return arr
