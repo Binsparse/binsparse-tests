@@ -85,10 +85,14 @@ base_value_dtype_names = [
     "float64",
 ]
 
+signed_integer_dtype_names = ["int8", "int16", "int32", "int64"]
+unsigned_integer_dtype_names = ["uint8", "uint16", "uint32", "uint64"]
+floating_dtype_names = ["float32", "float64"]
+complex_dtype_names = ["complex[float32]", "complex[float64]"]
+
 complex_value_dtype_names = [
     *base_value_dtype_names,
-    "complex[float32]",
-    "complex[float64]",
+    *complex_dtype_names,
 ]
 
 dtype_to_str = {
@@ -122,6 +126,32 @@ def base_value_datatypes():
     return st.sampled_from(base_value_dtype_names)
 
 
+def boolean_value_datatypes():
+    return st.just("bint8")
+
+
+def signed_integer_datatypes():
+    return st.sampled_from(signed_integer_dtype_names)
+
+
+def unsigned_integer_datatypes():
+    return st.sampled_from(unsigned_integer_dtype_names)
+
+
+def floating_datatypes():
+    return st.sampled_from(floating_dtype_names)
+
+
+def complex_datatypes():
+    return st.sampled_from(complex_dtype_names)
+
+
+def iso_datatypes(dtypes=None):
+    if dtypes is None:
+        dtypes = base_value_datatypes()
+    return as_strategy(dtypes).map(lambda dtype: f"iso[{dtype}]")
+
+
 def complex_value_datatypes():
     return st.sampled_from(complex_value_dtype_names)
 
@@ -130,7 +160,7 @@ def value_datatypes(allow_iso=True):
     base = complex_value_datatypes()
     if not allow_iso:
         return base
-    return st.one_of(base, base_value_datatypes().map(lambda dtype: f"iso[{dtype}]"))
+    return st.one_of(base, iso_datatypes())
 
 
 def trees(format, shape):
@@ -367,6 +397,12 @@ def npy_inputs(
     transpose=MISSING,
     fill=MISSING,
 ):
+    n = draw(as_strategy(n))
+    max_rank = draw(as_strategy(max_rank))
+    max_size = draw(as_strategy(max_size))
+    predefined_only = draw(as_strategy(predefined_only))
+    format_name = draw(as_strategy(format_name))
+
     if format_name is not None:
         format, default_transpose = predefined[format_name]
         format_rank = rank(format)

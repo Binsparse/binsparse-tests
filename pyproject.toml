@@ -49,6 +49,7 @@ platforms = ["linux-64", "osx-arm64"]
 python = ">=3.11"
 
 [tool.pixi.environments]
+test = { features = ["test", "hdf5", "zarr"], solve-group = "default" }
 test-hdf5 = { features = ["test", "hdf5"], solve-group = "default" }
 test-zarr = { features = ["test", "zarr"], solve-group = "default" }
 test-npz = { features = ["test"], solve-group = "default" }
@@ -94,12 +95,13 @@ markers = [
 ]
 
 [tool.pixi.feature.test.tasks.test]
+cmd = "pytest -n {{ njobs }}"
 args = [
     { arg = "njobs", default = "logical" },
 ]
+default-environment = "test"
 depends-on = [
     { task = "type-check", environment = "test", args = [] },
-    { task = "test-only", args = ["{{ njobs }}"] },
 ]
 
 [tool.pixi.feature.test.tasks.test-only]
