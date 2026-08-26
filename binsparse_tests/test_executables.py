@@ -55,7 +55,10 @@ ISO = [
 @settings(max_examples=MAX_EXAMPLES, deadline=None)
 @given(data=st.data())
 def test_1_dim(
-    data: st.DataObject, values_dtypes: st.SearchStrategy[str], iso: bool
+    data: st.DataObject,
+    values_dtypes: st.SearchStrategy[str],
+    iso: bool,
+    container_suffix: str,
 ) -> None:
     if iso:
         values_dtypes = iso_datatypes(values_dtypes)
@@ -68,7 +71,7 @@ def test_1_dim(
         ),
         label="generated",
     )
-    run_executables(generated)
+    run_executables(generated, container_suffix=container_suffix)
 
 
 @pytest.mark.parametrize("iso", ISO)
@@ -76,7 +79,10 @@ def test_1_dim(
 @settings(max_examples=MAX_EXAMPLES, deadline=None)
 @given(data=st.data())
 def test_2_dim(
-    data: st.DataObject, values_dtypes: st.SearchStrategy[str], iso: bool
+    data: st.DataObject,
+    values_dtypes: st.SearchStrategy[str],
+    iso: bool,
+    container_suffix: str,
 ) -> None:
     if iso:
         values_dtypes = iso_datatypes(values_dtypes)
@@ -89,7 +95,7 @@ def test_2_dim(
         ),
         label="generated",
     )
-    run_executables(generated)
+    run_executables(generated, container_suffix=container_suffix)
 
 
 @pytest.mark.parametrize("iso", ISO)
@@ -97,7 +103,10 @@ def test_2_dim(
 @settings(max_examples=MAX_EXAMPLES, deadline=None)
 @given(data=st.data())
 def test_csr(
-    data: st.DataObject, values_dtypes: st.SearchStrategy[str], iso: bool
+    data: st.DataObject,
+    values_dtypes: st.SearchStrategy[str],
+    iso: bool,
+    container_suffix: str,
 ) -> None:
     if iso:
         values_dtypes = iso_datatypes(values_dtypes)
@@ -110,4 +119,4 @@ def test_csr(
         ),
         label="generated",
     )
-    run_executables(generated)
+    run_executables(generated, container_suffix=container_suffix)

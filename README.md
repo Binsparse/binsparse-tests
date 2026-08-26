@@ -91,12 +91,19 @@ export BINSPARSE_TESTS_VERSION="2023.12"
 
 ## Run the suite
 
-Run the environment for the binary container you want to test:
+By default, the suite tests NPZ, Zarr, and HDF5:
 
 ```console
-pixi run -e test-hdf5 test
-pixi run -e test-zarr test
-pixi run -e test-npz test
+pixi run -e test test
+```
+
+Use pytest marks to test only selected container types:
+
+```console
+pixi run -e test-npz pytest -m npz
+pixi run -e test-zarr pytest -m zarr
+pixi run -e test-hdf5 pytest -m hdf5
+pixi run -e test pytest -m "npz or hdf5"
 ```
 
 ## Definition of conformance

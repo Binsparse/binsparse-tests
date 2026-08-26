@@ -86,6 +86,9 @@ junit_family = "xunit2"
 strict_config = true
 strict_markers = true
 markers = [
+    "npz: tests using the NPZ binary container",
+    "zarr: tests using the Zarr binary container",
+    "hdf5: tests using the HDF5 binary container",
     "bool_values: generated values use bint8",
     "signed_integer: generated values use a signed integer dtype",
     "unsigned_integer: generated values use an unsigned integer dtype",
