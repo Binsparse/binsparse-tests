@@ -23,8 +23,11 @@ from .run import run_executables
 
 MAX_EXAMPLES = 5
 DIMENSION = st.integers(min_value=0, max_value=4)
+SHAPE_0D = st.just(())
 SHAPE_1D = st.tuples(DIMENSION)
 SHAPE_2D = st.tuples(DIMENSION, DIMENSION)
+SHAPE_3D = st.tuples(DIMENSION, DIMENSION, DIMENSION)
+NDIM = st.integers(min_value=4, max_value=6)
 
 VALUE_DTYPE_STRATEGIES = [
     pytest.param(
@@ -66,24 +69,20 @@ PREDEFINED_2D = [pytest.param(name, id=name) for name in predefined_2d]
 @pytest.mark.parametrize("values_dtypes", VALUE_DTYPE_STRATEGIES)
 @settings(max_examples=MAX_EXAMPLES, deadline=None)
 @given(data=st.data())
-def test_1_dim(
+def test_custom_0d(
     data: st.DataObject,
     values_dtypes: st.SearchStrategy[str],
     iso: bool,
     container_suffix: str,
 ) -> None:
-    if iso:
-        values_dtypes = iso_datatypes(values_dtypes)
-    generated = data.draw(
-        npy_inputs(
-            shape=SHAPE_1D,
-            format=formats(1),
-            datatypes=datatypes(values_dtypes),
-            transpose=optional_transposes(1),
-        ),
-        label="generated",
+    _run_custom_case(
+        data,
+        ndim=0,
+        shape=SHAPE_0D,
+        values_dtypes=values_dtypes,
+        iso=iso,
+        container_suffix=container_suffix,
     )
-    run_executables(generated, container_suffix=container_suffix)
 
 
 @pytest.mark.parametrize("container_suffix", CONTAINERS)
@@ -91,8 +90,91 @@ def test_1_dim(
 @pytest.mark.parametrize("values_dtypes", VALUE_DTYPE_STRATEGIES)
 @settings(max_examples=MAX_EXAMPLES, deadline=None)
 @given(data=st.data())
-def test_2_dim(
+def test_custom_1d(
     data: st.DataObject,
+    values_dtypes: st.SearchStrategy[str],
+    iso: bool,
+    container_suffix: str,
+) -> None:
+    _run_custom_case(
+        data,
+        ndim=1,
+        shape=SHAPE_1D,
+        values_dtypes=values_dtypes,
+        iso=iso,
+        container_suffix=container_suffix,
+    )
+
+
+@pytest.mark.parametrize("container_suffix", CONTAINERS)
+@pytest.mark.parametrize("iso", ISO)
+@pytest.mark.parametrize("values_dtypes", VALUE_DTYPE_STRATEGIES)
+@settings(max_examples=MAX_EXAMPLES, deadline=None)
+@given(data=st.data())
+def test_custom_2d(
+    data: st.DataObject,
+    values_dtypes: st.SearchStrategy[str],
+    iso: bool,
+    container_suffix: str,
+) -> None:
+    _run_custom_case(
+        data,
+        ndim=2,
+        shape=SHAPE_2D,
+        values_dtypes=values_dtypes,
+        iso=iso,
+        container_suffix=container_suffix,
+    )
+
+
+@pytest.mark.parametrize("container_suffix", CONTAINERS)
+@pytest.mark.parametrize("iso", ISO)
+@pytest.mark.parametrize("values_dtypes", VALUE_DTYPE_STRATEGIES)
+@settings(max_examples=MAX_EXAMPLES, deadline=None)
+@given(data=st.data())
+def test_custom_3d(
+    data: st.DataObject,
+    values_dtypes: st.SearchStrategy[str],
+    iso: bool,
+    container_suffix: str,
+) -> None:
+    _run_custom_case(
+        data,
+        ndim=3,
+        shape=SHAPE_3D,
+        values_dtypes=values_dtypes,
+        iso=iso,
+        container_suffix=container_suffix,
+    )
+
+
+@pytest.mark.parametrize("container_suffix", CONTAINERS)
+@pytest.mark.parametrize("iso", ISO)
+@pytest.mark.parametrize("values_dtypes", VALUE_DTYPE_STRATEGIES)
+@settings(max_examples=MAX_EXAMPLES, deadline=None)
+@given(data=st.data(), ndim=NDIM)
+def test_custom_nd(
+    data: st.DataObject,
+    ndim: int,
+    values_dtypes: st.SearchStrategy[str],
+    iso: bool,
+    container_suffix: str,
+) -> None:
+    _run_custom_case(
+        data,
+        ndim=ndim,
+        shape=st.tuples(*([DIMENSION] * ndim)),
+        values_dtypes=values_dtypes,
+        iso=iso,
+        container_suffix=container_suffix,
+    )
+
+
+def _run_custom_case(
+    data: st.DataObject,
+    *,
+    ndim: int,
+    shape: st.SearchStrategy[tuple[int, ...]],
     values_dtypes: st.SearchStrategy[str],
     iso: bool,
     container_suffix: str,
@@ -101,10 +183,10 @@ def test_2_dim(
         values_dtypes = iso_datatypes(values_dtypes)
     generated = data.draw(
         npy_inputs(
-            shape=SHAPE_2D,
-            format=formats(2),
+            shape=shape,
+            format=formats(ndim),
             datatypes=datatypes(values_dtypes),
-            transpose=optional_transposes(2),
+            transpose=optional_transposes(ndim),
         ),
         label="generated",
     )
