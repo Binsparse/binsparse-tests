@@ -49,7 +49,14 @@ ISO = [
     pytest.param(True, id="iso", marks=pytest.mark.iso),
 ]
 
+CONTAINERS = [
+    pytest.param(".npz", id="npz", marks=pytest.mark.npz),
+    pytest.param(".zarr", id="zarr", marks=pytest.mark.zarr),
+    pytest.param(".h5", id="hdf5", marks=pytest.mark.hdf5),
+]
 
+
+@pytest.mark.parametrize("container_suffix", CONTAINERS)
 @pytest.mark.parametrize("iso", ISO)
 @pytest.mark.parametrize("values_dtypes", VALUE_DTYPE_STRATEGIES)
 @settings(max_examples=MAX_EXAMPLES, deadline=None)
@@ -74,6 +81,7 @@ def test_1_dim(
     run_executables(generated, container_suffix=container_suffix)
 
 
+@pytest.mark.parametrize("container_suffix", CONTAINERS)
 @pytest.mark.parametrize("iso", ISO)
 @pytest.mark.parametrize("values_dtypes", VALUE_DTYPE_STRATEGIES)
 @settings(max_examples=MAX_EXAMPLES, deadline=None)
@@ -98,6 +106,7 @@ def test_2_dim(
     run_executables(generated, container_suffix=container_suffix)
 
 
+@pytest.mark.parametrize("container_suffix", CONTAINERS)
 @pytest.mark.parametrize("iso", ISO)
 @pytest.mark.parametrize("values_dtypes", VALUE_DTYPE_STRATEGIES)
 @settings(max_examples=MAX_EXAMPLES, deadline=None)
