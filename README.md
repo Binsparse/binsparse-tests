@@ -60,13 +60,26 @@ binsparse_to_binsparse <tensor_in> <tensor_out>
 The library must convert the input to its internal representation before writing the
 output.
 
-Set the executable paths with environment variables:
+If all three executables are in the same directory, set `BINSPARSE_BIN` to that
+directory:
+
+```console
+export BINSPARSE_BIN=/path/to/bin
+```
+
+The directory must contain executables named `npy_to_binsparse`,
+`binsparse_to_npy`, and `binsparse_to_binsparse`.
+
+Alternatively, set each executable path individually:
 
 ```console
 export NPY_TO_BINSPARSE=npy_to_binsparse
 export BINSPARSE_TO_NPY=binsparse_to_npy
 export BINSPARSE_TO_BINSPARSE=binsparse_to_binsparse
 ```
+
+An individual executable variable takes precedence over `BINSPARSE_BIN` when both
+are set.
 
 ### Select a Binsparse version
 
