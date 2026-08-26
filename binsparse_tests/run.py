@@ -142,10 +142,12 @@ def _resolve_commands(
     binsparse_to_binsparse: Command | None,
 ) -> dict[str, Command]:
     commands = {
-        "npy_to_binsparse": npy_to_binsparse or os.environ.get("NPY_TO_BINSPARSE"),
-        "binsparse_to_npy": binsparse_to_npy or os.environ.get("BINSPARSE_TO_NPY"),
+        "npy_to_binsparse": npy_to_binsparse
+        or _configured_executable("npy_to_binsparse"),
+        "binsparse_to_npy": binsparse_to_npy
+        or _configured_executable("binsparse_to_npy"),
         "binsparse_to_binsparse": binsparse_to_binsparse
-        or os.environ.get("BINSPARSE_TO_BINSPARSE"),
+        or _configured_executable("binsparse_to_binsparse"),
     }
     missing = [
         EXECUTABLE_ENV[name] for name, command in commands.items() if command is None
@@ -155,6 +157,14 @@ def _resolve_commands(
             f"missing executable environment variables: {', '.join(missing)}"
         )
     return {name: command for name, command in commands.items() if command is not None}
+
+
+def _configured_executable(name: str) -> str | None:
+    if command := os.environ.get(EXECUTABLE_ENV[name]):
+        return command
+    if executable_directory := os.environ.get("BINSPARSE_BIN"):
+        return str(Path(executable_directory) / name)
+    return None
 
 
 def _write_npy_inputs(
