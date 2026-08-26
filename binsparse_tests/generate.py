@@ -39,12 +39,15 @@ def sparse(level, rank=1):
 
 element = {"level_desc": "element"}
 
-predefined = {
+predefined_1d = {
     "DVEC": (dense(element), None),
+    "CVEC": (sparse(element), None),
+}
+
+predefined_2d = {
     "DMAT": (dense(dense(element)), None),
     "DMATR": (dense(dense(element)), None),
     "DMATC": (dense(dense(element)), (1, 0)),
-    "CVEC": (sparse(element), None),
     "CSR": (dense(sparse(element)), None),
     "CSC": (dense(sparse(element)), (1, 0)),
     "DCSR": (sparse(sparse(element)), None),
@@ -53,6 +56,8 @@ predefined = {
     "COOR": (sparse(element, rank=2), None),
     "COOC": (sparse(element, rank=2), (1, 0)),
 }
+
+predefined = {**predefined_1d, **predefined_2d}
 
 base_value_dtype_names = [
     "bint8",

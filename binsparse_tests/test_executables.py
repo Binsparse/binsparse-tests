@@ -14,7 +14,8 @@ from .generate import (
     npy_inputs,
     optional_transposes,
     predefined,
-    rank,
+    predefined_1d,
+    predefined_2d,
     signed_integer_datatypes,
     unsigned_integer_datatypes,
 )
@@ -56,7 +57,8 @@ CONTAINERS = [
     pytest.param(".h5", id="hdf5", marks=pytest.mark.hdf5),
 ]
 
-PREDEFINED_FORMATS = [pytest.param(name, id=name) for name in predefined]
+PREDEFINED_1D = [pytest.param(name, id=name) for name in predefined_1d]
+PREDEFINED_2D = [pytest.param(name, id=name) for name in predefined_2d]
 
 
 @pytest.mark.parametrize("container_suffix", CONTAINERS)
@@ -112,10 +114,10 @@ def test_2_dim(
 @pytest.mark.parametrize("container_suffix", CONTAINERS)
 @pytest.mark.parametrize("iso", ISO)
 @pytest.mark.parametrize("values_dtypes", VALUE_DTYPE_STRATEGIES)
-@pytest.mark.parametrize("format_name", PREDEFINED_FORMATS)
+@pytest.mark.parametrize("format_name", PREDEFINED_1D)
 @settings(max_examples=MAX_EXAMPLES, deadline=None)
 @given(data=st.data())
-def test_predefined_format(
+def test_predefined_1d(
     data: st.DataObject,
     values_dtypes: st.SearchStrategy[str],
     iso: bool,
@@ -127,7 +129,36 @@ def test_predefined_format(
     format, transpose = predefined[format_name]
     generated = data.draw(
         npy_inputs(
-            shape=st.tuples(*([DIMENSION] * rank(format))),
+            shape=SHAPE_1D,
+            format=st.just(format),
+            format_name=st.just(format_name),
+            datatypes=datatypes(values_dtypes),
+            transpose=st.just(transpose),
+        ),
+        label="generated",
+    )
+    run_executables(generated, container_suffix=container_suffix)
+
+
+@pytest.mark.parametrize("container_suffix", CONTAINERS)
+@pytest.mark.parametrize("iso", ISO)
+@pytest.mark.parametrize("values_dtypes", VALUE_DTYPE_STRATEGIES)
+@pytest.mark.parametrize("format_name", PREDEFINED_2D)
+@settings(max_examples=MAX_EXAMPLES, deadline=None)
+@given(data=st.data())
+def test_predefined_2d(
+    data: st.DataObject,
+    values_dtypes: st.SearchStrategy[str],
+    iso: bool,
+    container_suffix: str,
+    format_name: str,
+) -> None:
+    if iso:
+        values_dtypes = iso_datatypes(values_dtypes)
+    format, transpose = predefined[format_name]
+    generated = data.draw(
+        npy_inputs(
+            shape=SHAPE_2D,
             format=st.just(format),
             format_name=st.just(format_name),
             datatypes=datatypes(values_dtypes),
