@@ -14,6 +14,7 @@ from .generate import (
     npy_inputs,
     optional_transposes,
     predefined,
+    rank,
     signed_integer_datatypes,
     unsigned_integer_datatypes,
 )
@@ -54,6 +55,8 @@ CONTAINERS = [
     pytest.param(".zarr", id="zarr", marks=pytest.mark.zarr),
     pytest.param(".h5", id="hdf5", marks=pytest.mark.hdf5),
 ]
+
+PREDEFINED_FORMATS = [pytest.param(name, id=name) for name in predefined]
 
 
 @pytest.mark.parametrize("container_suffix", CONTAINERS)
@@ -109,22 +112,26 @@ def test_2_dim(
 @pytest.mark.parametrize("container_suffix", CONTAINERS)
 @pytest.mark.parametrize("iso", ISO)
 @pytest.mark.parametrize("values_dtypes", VALUE_DTYPE_STRATEGIES)
+@pytest.mark.parametrize("format_name", PREDEFINED_FORMATS)
 @settings(max_examples=MAX_EXAMPLES, deadline=None)
 @given(data=st.data())
-def test_csr(
+def test_predefined_format(
     data: st.DataObject,
     values_dtypes: st.SearchStrategy[str],
     iso: bool,
     container_suffix: str,
+    format_name: str,
 ) -> None:
     if iso:
         values_dtypes = iso_datatypes(values_dtypes)
+    format, transpose = predefined[format_name]
     generated = data.draw(
         npy_inputs(
-            shape=SHAPE_2D,
-            format=st.just(predefined["CSR"][0]),
-            format_name=st.just("CSR"),
+            shape=st.tuples(*([DIMENSION] * rank(format))),
+            format=st.just(format),
+            format_name=st.just(format_name),
             datatypes=datatypes(values_dtypes),
+            transpose=st.just(transpose),
         ),
         label="generated",
     )
