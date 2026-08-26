@@ -13,6 +13,8 @@ from typing import Any
 import numpy as np
 from binsparse import cli as reference_cli
 
+from .compare import assert_containers_equal
+
 Command = str | Sequence[str]
 GeneratedInput = tuple[np.ndarray, np.ndarray, Any, Mapping[str, Any]]
 
@@ -92,7 +94,6 @@ def _run_case(
         "npy_to_binsparse",
         actual_from_npy,
         expected_from_npy,
-        directory / "compare_npy_to_binsparse",
     )
 
     expected_npy = _npy_paths(directory / "expected_binsparse_to_npy")
@@ -131,7 +132,6 @@ def _run_case(
         "binsparse_to_binsparse",
         actual_roundtrip,
         expected_roundtrip,
-        directory / "compare_binsparse_to_binsparse",
     )
 
 
@@ -222,20 +222,8 @@ def _assert_binsparse_equal(
     name: str,
     actual: Path,
     expected: Path,
-    directory: Path,
 ) -> None:
-    actual_npy = _reference_binsparse_to_npy(actual, directory / "actual")
-    expected_npy = _reference_binsparse_to_npy(expected, directory / "expected")
-    _assert_npy_equal(name, actual_npy, expected_npy)
-
-
-def _reference_binsparse_to_npy(
-    tensor_in: Path,
-    prefix: Path,
-) -> tuple[Path, Path, Path]:
-    paths = _npy_paths(prefix)
-    _run_reference("binsparse_to_npy", [tensor_in, *paths], prefix.parent)
-    return paths
+    assert_containers_equal(actual, expected, label=name)
 
 
 def _assert_npy_equal(
