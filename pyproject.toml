@@ -5,6 +5,8 @@ requires-python = ">=3.11"
 version = "0.1.0"
 dependencies = [
     "numpy>=2.5.2,<3",
+    "binsparse @ git+https://github.com/Binsparse/binsparse-reference-python",
+    "hypothesis>=6.165.10,<7",
 ]
 
 [project.optional-dependencies]
@@ -47,6 +49,7 @@ platforms = ["linux-64", "osx-arm64"]
 python = ">=3.11"
 
 [tool.pixi.environments]
+test = { features = ["test", "hdf5", "zarr"], solve-group = "default" }
 test-hdf5 = { features = ["test", "hdf5"], solve-group = "default" }
 test-zarr = { features = ["test", "zarr"], solve-group = "default" }
 test-npz = { features = ["test"], solve-group = "default" }
@@ -58,6 +61,9 @@ binsparse-tests = { path = ".", editable = true }
 
 [tool.pixi.feature.pre-commit.dependencies]
 python = ">=3.11"
+
+[tool.setuptools.packages.find]
+include = ["binsparse_tests*"]
 
 [tool.ruff.lint]
 select = ["F", "E", "W", "I", "B", "UP", "YTT", "BLE", "C4", "T10", "ISC", "ICN", "PIE", "PYI", "RSE", "RET", "SIM", "PGH", "FLY", "NPY", "PERF", "RUF022", "TID"]
@@ -79,14 +85,23 @@ testpaths = ["binsparse_tests"]
 junit_family = "xunit2"
 strict_config = true
 strict_markers = true
+markers = [
+    "bool_values: generated values use bint8",
+    "signed_integer: generated values use a signed integer dtype",
+    "unsigned_integer: generated values use an unsigned integer dtype",
+    "floating: generated values use a floating dtype",
+    "complex_values: generated values use a complex dtype",
+    "iso: generated values use an iso[...] dtype",
+]
 
 [tool.pixi.feature.test.tasks.test]
+cmd = "pytest -n {{ njobs }}"
 args = [
     { arg = "njobs", default = "logical" },
 ]
+default-environment = "test"
 depends-on = [
     { task = "type-check", environment = "test", args = [] },
-    { task = "test-only", args = ["{{ njobs }}"] },
 ]
 
 [tool.pixi.feature.test.tasks.test-only]
