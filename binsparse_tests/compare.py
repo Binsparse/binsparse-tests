@@ -56,30 +56,48 @@ class NPZContainer(BinaryContainer):
     """Read a NumPy ZIP container."""
 
     def read_header(self) -> dict[str, Any]:
-        return _decode_header(self.source["binsparse"])["binsparse"]
+        return json.loads(str(self.source["binsparse"].item()))["binsparse"]
 
     def read_buffer(self, name: str) -> np.ndarray:
-        return np.asarray(self.source[name])
+        array = np.asarray(self.source[name])
+        data_type = self.read_header()["data_types"][name]
+        while data_type.startswith("iso[") and data_type.endswith("]"):
+            data_type = data_type[4:-1]
+        if data_type == "bint8":
+            array = array.astype(np.bool_, copy=False)
+        return array
 
 
 class HDF5Container(BinaryContainer):
     """Read an HDF5 container."""
 
     def read_header(self) -> dict[str, Any]:
-        return _decode_header(self.source.attrs["binsparse"])["binsparse"]
+        return json.loads(self.source.attrs["binsparse"])["binsparse"]
 
     def read_buffer(self, name: str) -> np.ndarray:
-        return np.asarray(self.source[name])
+        array = np.asarray(self.source[name][()])
+        data_type = self.read_header()["data_types"][name]
+        while data_type.startswith("iso[") and data_type.endswith("]"):
+            data_type = data_type[4:-1]
+        if data_type == "bint8":
+            array = array.astype(np.bool_, copy=False)
+        return array
 
 
 class ZarrContainer(BinaryContainer):
     """Read a Zarr container."""
 
     def read_header(self) -> dict[str, Any]:
-        return _decode_header(self.source.attrs["binsparse"])["binsparse"]
+        return self.source.attrs["binsparse"]["binsparse"]
 
     def read_buffer(self, name: str) -> np.ndarray:
-        return np.asarray(self.source[name])
+        array = np.asarray(self.source[name][...])
+        data_type = self.read_header()["data_types"][name]
+        while data_type.startswith("iso[") and data_type.endswith("]"):
+            data_type = data_type[4:-1]
+        if data_type == "bint8":
+            array = array.astype(np.bool_, copy=False)
+        return array
 
 
 def assert_containers_equal(
@@ -97,13 +115,10 @@ def assert_containers_equal(
         raise AssertionError(f"{label} header differs:\n{difference}")
 
     for name in expected_contents.buffers:
-        data_type = expected_contents.header["data_types"][name]
-        if not isinstance(data_type, str):
-            raise AssertionError(f"{label} buffer {name!r} has invalid data type")
         _assert_array_equal(
             f"{label} buffer {name!r}",
-            _semantic_array(actual_contents.buffers[name], data_type),
-            _semantic_array(expected_contents.buffers[name], data_type),
+            actual_contents.buffers[name],
+            expected_contents.buffers[name],
         )
 
 
@@ -137,18 +152,6 @@ def open_container(path: str | Path) -> Iterator[BinaryContainer]:
             )
 
 
-def _decode_header(value: Any) -> dict[str, Any]:
-    if isinstance(value, np.ndarray):
-        value = value.item()
-    if isinstance(value, bytes):
-        value = value.decode()
-    if isinstance(value, str):
-        value = json.loads(value)
-    if not isinstance(value, dict):
-        raise AssertionError("Binsparse header is not a JSON object")
-    return value
-
-
 def _header_diff(
     actual: Mapping[str, Any], expected: Mapping[str, Any]
 ) -> str:
@@ -163,14 +166,6 @@ def _header_diff(
             lineterm="",
         )
     )
-
-
-def _semantic_array(array: np.ndarray, data_type: str) -> np.ndarray:
-    while data_type.startswith("iso[") and data_type.endswith("]"):
-        data_type = data_type[4:-1]
-    if data_type == "bint8":
-        return array.astype(np.bool_, copy=False)
-    return array
 
 
 def _assert_array_equal(name: str, actual: np.ndarray, expected: np.ndarray) -> None:
