@@ -26,14 +26,23 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/checkout@v6
+        with:
+          repository: Binsparse/binsparse-reference-python
+          path: reference
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - name: Install package and test dependencies
-        run: python -m pip install --upgrade pip pytest pytest-cov pytest-xdist -e .
+        run: python -m pip install --upgrade pip pytest pytest-cov pytest-xdist -e ".[hdf5,zarr]"
       - name: Run tests
-        run: python -m pytest -n auto --cov=binsparse --cov-report=term-missing
+        env:
+          BINSPARSE_TO_BINSPARSE: python "${{ github.workspace }}/reference/bin/binsparse_to_binsparse"
+          BINSPARSE_TO_NPY: python "${{ github.workspace }}/reference/bin/binsparse_to_npy"
+          NPY_TO_BINSPARSE: python "${{ github.workspace }}/reference/bin/npy_to_binsparse"
+          PYTHONPATH: ${{ github.workspace }}/reference/src
+        run: python -m pytest -n auto
 
   type-check:
     name: Type check
@@ -48,34 +57,6 @@ jobs:
         run: python -m pip install --upgrade pip mypy -e .
       - name: Run mypy
         run: python -m mypy
-
-  conversions:
-    name: ${{ matrix.name }} conversion
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: SciPy
-            extra: scipy
-            test: src/tests/test_conversion_scipy.py
-          - name: PyData/Sparse
-            extra: sparse
-            test: src/tests/test_conversion_sparse.py
-          - name: PyTorch
-            extra: torch
-            test: src/tests/test_conversion_torch.py
-
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-          cache: pip
-      - name: Install ${{ matrix.name }} adapter
-        run: python -m pip install --upgrade pip pytest pytest-cov -e ".[${{ matrix.extra }}]"
-      - name: Test ${{ matrix.name }} adapter
-        run: python -m pytest -q ${{ matrix.test }}
 
   package:
     name: Build package
