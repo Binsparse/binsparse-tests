@@ -13,16 +13,16 @@ VALUES = np.asarray([1.0, np.nan, 3.0])
 
 
 def _write_npz(path: Path, values: np.ndarray = VALUES) -> None:
-    np.savez(path, binsparse=json.dumps(HEADER), values=values)
+    np.savez(path, binsparse=json.dumps({"binsparse": HEADER}), values=values)
 
 
 def test_npz_headers_compare_as_json(tmp_path: Path) -> None:
     actual = tmp_path / "actual.npz"
     expected = tmp_path / "expected.npz"
-    np.savez(actual, binsparse=json.dumps(HEADER), values=VALUES)
+    np.savez(actual, binsparse=json.dumps({"binsparse": HEADER}), values=VALUES)
     np.savez(
         expected,
-        binsparse=json.dumps({"data_types": HEADER["data_types"], "format": "CSR"}),
+        binsparse=json.dumps({"binsparse": {"data_types": HEADER["data_types"], "format": "CSR"}}),
         values=VALUES,
     )
 
@@ -43,7 +43,7 @@ def test_header_difference_shows_json_diff(tmp_path: Path) -> None:
     actual = tmp_path / "actual.npz"
     expected = tmp_path / "expected.npz"
     actual_header = {**HEADER, "format": "CSC"}
-    np.savez(actual, binsparse=json.dumps(actual_header), values=VALUES)
+    np.savez(actual, binsparse=json.dumps({"binsparse": actual_header}), values=VALUES)
     _write_npz(expected)
 
     with pytest.raises(AssertionError) as raised:
@@ -59,7 +59,7 @@ def test_hdf5(tmp_path: Path) -> None:
     h5py = pytest.importorskip("h5py")
     path = tmp_path / "tensor.h5"
     with h5py.File(path, "w") as file:
-        file.attrs["binsparse"] = json.dumps(HEADER)
+        file.attrs["binsparse"] = json.dumps({"binsparse": HEADER})
         file.create_dataset("values", data=VALUES)
 
     assert np.array_equal(
@@ -71,7 +71,7 @@ def test_zarr(tmp_path: Path) -> None:
     zarr = pytest.importorskip("zarr")
     path = tmp_path / "tensor.zarr"
     group = zarr.open_group(path, mode="w")
-    group.attrs["binsparse"] = HEADER
+    group.attrs["binsparse"] = {"binsparse": HEADER}
     group.create_array("values", data=VALUES)
 
     assert np.array_equal(

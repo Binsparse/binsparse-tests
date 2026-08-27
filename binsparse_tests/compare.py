@@ -56,7 +56,7 @@ class NPZContainer(BinaryContainer):
     """Read a NumPy ZIP container."""
 
     def read_header(self) -> dict[str, Any]:
-        return _decode_header(self.source["binsparse"])
+        return _decode_header(self.source["binsparse"])["binsparse"]
 
     def read_buffer(self, name: str) -> np.ndarray:
         return np.asarray(self.source[name])
@@ -66,7 +66,7 @@ class HDF5Container(BinaryContainer):
     """Read an HDF5 container."""
 
     def read_header(self) -> dict[str, Any]:
-        return _decode_header(self.source.attrs["binsparse"])
+        return _decode_header(self.source.attrs["binsparse"])["binsparse"]
 
     def read_buffer(self, name: str) -> np.ndarray:
         return np.asarray(self.source[name])
@@ -76,7 +76,7 @@ class ZarrContainer(BinaryContainer):
     """Read a Zarr container."""
 
     def read_header(self) -> dict[str, Any]:
-        return _decode_header(self.source.attrs["binsparse"])
+        return _decode_header(self.source.attrs["binsparse"])["binsparse"]
 
     def read_buffer(self, name: str) -> np.ndarray:
         return np.asarray(self.source[name])
