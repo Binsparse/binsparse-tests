@@ -163,12 +163,12 @@ Each file contains test ID substrings, one per line. Empty lines and lines begin
 with `#` are ignored.
 
 ```text
-# Skip a specific test, such as a custom format that is not CSF.
-binsparse_tests/test_custom.py::test_sparse_sparse_dense
+# Skip one exact generated case.
+binsparse_tests/test_executables.py::test_custom_2d[boolean-non-iso-no-transpose-coo-layout-zero-fill-npz]
 
-# Skip a specific parameter, such as an unsupported iso representation.
-binsparse_tests/test_add.py::test_add[iso]
+# Skip every case with a particular generated parameter.
+-coo-layout-
 
-# Skip an entire module, such as all custom-format tests.
-binsparse_tests/test_custom.py
+# Skip an entire test function, including all of its generated cases.
+binsparse_tests/test_executables.py::test_custom_2d
 ```
