@@ -131,7 +131,11 @@ conversion fails.
 
 The suite uses [Hypothesis](https://hypothesis.readthedocs.io/en/latest/) to generate
 a diverse set of random matrices. It tests every predefined alias and a random set of
-custom formats.
+custom formats. Framework-relevant capabilities are exposed as pytest parameters:
+test IDs distinguish zero from nonzero fill values; dense, flat COO, and mixed
+custom layouts; and transposed from non-transposed custom tensors. This allows skip
+and XFAIL files to select unsupported capabilities without suppressing every
+Hypothesis example in a broader parameter group.
 
 ### Binary container equivalence
 

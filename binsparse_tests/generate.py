@@ -282,6 +282,7 @@ def npy_inputs(
     format_name=NO_FORMAT_NAME,
     transpose=NO_TRANSPOSE,
     fill=OPTIONAL_FILL,
+    fill_value_kind="any",
 ):
     shape = draw(shape)
     format = draw(format)
@@ -304,12 +305,20 @@ def npy_inputs(
 
     if values_dtype.startswith("iso["):
         assume(bool(np.any(pattern)))
-    fill_value = draw(scalar_values(unwrapped_dtype(values_dtype)))
+    fill_dtype = unwrapped_dtype(values_dtype)
+    if fill_value_kind == "zero":
+        fill_value = np.zeros((), dtype=str_to_dtype[fill_dtype])[()]
+    elif fill_value_kind == "nonzero":
+        fill_value = draw(scalar_values(fill_dtype).filter(lambda value: value != 0))
+    elif fill_value_kind == "any":
+        fill_value = draw(scalar_values(fill_dtype))
+    else:
+        raise ValueError(f"unknown fill value kind {fill_value_kind!r}")
     stored_values = draw(value_array(values_dtype, int(np.sum(pattern))))
     tensor = dense_from_pattern(shape, pattern, fill_value, stored_values)
     fill_value = np.asarray(
         fill_value,
-        dtype=str_to_dtype[unwrapped_dtype(values_dtype)],
+        dtype=str_to_dtype[fill_dtype],
     )
     if format_name is None:
         out_header = header(

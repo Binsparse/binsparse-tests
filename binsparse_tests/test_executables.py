@@ -8,15 +8,17 @@ from .generate import (
     boolean_value_datatypes,
     complex_datatypes,
     datatypes,
+    dense,
+    element,
     floating_datatypes,
     formats,
     iso_datatypes,
     npy_inputs,
-    optional_transposes,
     predefined,
     predefined_1d,
     predefined_2d,
     signed_integer_datatypes,
+    sparse,
     unsigned_integer_datatypes,
 )
 from .run import run_executables
@@ -60,11 +62,29 @@ CONTAINERS = [
     pytest.param(".h5", id="hdf5", marks=pytest.mark.hdf5),
 ]
 
+FILL_VALUE_KINDS = [
+    pytest.param("zero", id="zero-fill"),
+    pytest.param("nonzero", id="nonzero-fill"),
+]
+
+CUSTOM_FORMAT_KINDS = [
+    pytest.param("dense", id="dense-layout"),
+    pytest.param("coo", id="coo-layout"),
+    pytest.param("mixed", id="mixed-layout"),
+]
+
+CUSTOM_TRANSPOSE_KINDS = [
+    pytest.param("none", id="no-transpose"),
+    pytest.param("permuted", id="transposed"),
+]
+
 PREDEFINED_1D = [pytest.param(name, id=name) for name in predefined_1d]
 PREDEFINED_2D = [pytest.param(name, id=name) for name in predefined_2d]
 
 
 @pytest.mark.parametrize("container_suffix", CONTAINERS)
+@pytest.mark.parametrize("fill_value_kind", FILL_VALUE_KINDS)
+@pytest.mark.parametrize("transpose_kind", CUSTOM_TRANSPOSE_KINDS)
 @pytest.mark.parametrize("iso", ISO)
 @pytest.mark.parametrize("values_dtypes", VALUE_DTYPE_STRATEGIES)
 @settings(max_examples=MAX_EXAMPLES, deadline=None)
@@ -74,6 +94,8 @@ def test_custom_0d(
     values_dtypes: st.SearchStrategy[str],
     iso: bool,
     container_suffix: str,
+    fill_value_kind: str,
+    transpose_kind: str,
 ) -> None:
     _run_custom_case(
         data,
@@ -82,10 +104,15 @@ def test_custom_0d(
         values_dtypes=values_dtypes,
         iso=iso,
         container_suffix=container_suffix,
+        fill_value_kind=fill_value_kind,
+        transpose_kind=transpose_kind,
     )
 
 
 @pytest.mark.parametrize("container_suffix", CONTAINERS)
+@pytest.mark.parametrize("fill_value_kind", FILL_VALUE_KINDS)
+@pytest.mark.parametrize("format_kind", CUSTOM_FORMAT_KINDS)
+@pytest.mark.parametrize("transpose_kind", CUSTOM_TRANSPOSE_KINDS)
 @pytest.mark.parametrize("iso", ISO)
 @pytest.mark.parametrize("values_dtypes", VALUE_DTYPE_STRATEGIES)
 @settings(max_examples=MAX_EXAMPLES, deadline=None)
@@ -95,6 +122,9 @@ def test_custom_1d(
     values_dtypes: st.SearchStrategy[str],
     iso: bool,
     container_suffix: str,
+    fill_value_kind: str,
+    format_kind: str,
+    transpose_kind: str,
 ) -> None:
     _run_custom_case(
         data,
@@ -103,10 +133,16 @@ def test_custom_1d(
         values_dtypes=values_dtypes,
         iso=iso,
         container_suffix=container_suffix,
+        fill_value_kind=fill_value_kind,
+        format_kind=format_kind,
+        transpose_kind=transpose_kind,
     )
 
 
 @pytest.mark.parametrize("container_suffix", CONTAINERS)
+@pytest.mark.parametrize("fill_value_kind", FILL_VALUE_KINDS)
+@pytest.mark.parametrize("format_kind", CUSTOM_FORMAT_KINDS)
+@pytest.mark.parametrize("transpose_kind", CUSTOM_TRANSPOSE_KINDS)
 @pytest.mark.parametrize("iso", ISO)
 @pytest.mark.parametrize("values_dtypes", VALUE_DTYPE_STRATEGIES)
 @settings(max_examples=MAX_EXAMPLES, deadline=None)
@@ -116,6 +152,9 @@ def test_custom_2d(
     values_dtypes: st.SearchStrategy[str],
     iso: bool,
     container_suffix: str,
+    fill_value_kind: str,
+    format_kind: str,
+    transpose_kind: str,
 ) -> None:
     _run_custom_case(
         data,
@@ -124,10 +163,16 @@ def test_custom_2d(
         values_dtypes=values_dtypes,
         iso=iso,
         container_suffix=container_suffix,
+        fill_value_kind=fill_value_kind,
+        format_kind=format_kind,
+        transpose_kind=transpose_kind,
     )
 
 
 @pytest.mark.parametrize("container_suffix", CONTAINERS)
+@pytest.mark.parametrize("fill_value_kind", FILL_VALUE_KINDS)
+@pytest.mark.parametrize("format_kind", CUSTOM_FORMAT_KINDS)
+@pytest.mark.parametrize("transpose_kind", CUSTOM_TRANSPOSE_KINDS)
 @pytest.mark.parametrize("iso", ISO)
 @pytest.mark.parametrize("values_dtypes", VALUE_DTYPE_STRATEGIES)
 @settings(max_examples=MAX_EXAMPLES, deadline=None)
@@ -137,6 +182,9 @@ def test_custom_3d(
     values_dtypes: st.SearchStrategy[str],
     iso: bool,
     container_suffix: str,
+    fill_value_kind: str,
+    format_kind: str,
+    transpose_kind: str,
 ) -> None:
     _run_custom_case(
         data,
@@ -145,10 +193,16 @@ def test_custom_3d(
         values_dtypes=values_dtypes,
         iso=iso,
         container_suffix=container_suffix,
+        fill_value_kind=fill_value_kind,
+        format_kind=format_kind,
+        transpose_kind=transpose_kind,
     )
 
 
 @pytest.mark.parametrize("container_suffix", CONTAINERS)
+@pytest.mark.parametrize("fill_value_kind", FILL_VALUE_KINDS)
+@pytest.mark.parametrize("format_kind", CUSTOM_FORMAT_KINDS)
+@pytest.mark.parametrize("transpose_kind", CUSTOM_TRANSPOSE_KINDS)
 @pytest.mark.parametrize("iso", ISO)
 @pytest.mark.parametrize("values_dtypes", VALUE_DTYPE_STRATEGIES)
 @settings(max_examples=MAX_EXAMPLES, deadline=None)
@@ -159,6 +213,9 @@ def test_custom_nd(
     values_dtypes: st.SearchStrategy[str],
     iso: bool,
     container_suffix: str,
+    fill_value_kind: str,
+    format_kind: str,
+    transpose_kind: str,
 ) -> None:
     _run_custom_case(
         data,
@@ -167,6 +224,9 @@ def test_custom_nd(
         values_dtypes=values_dtypes,
         iso=iso,
         container_suffix=container_suffix,
+        fill_value_kind=fill_value_kind,
+        format_kind=format_kind,
+        transpose_kind=transpose_kind,
     )
 
 
@@ -178,22 +238,47 @@ def _run_custom_case(
     values_dtypes: st.SearchStrategy[str],
     iso: bool,
     container_suffix: str,
+    fill_value_kind: str,
+    format_kind: str = "mixed",
+    transpose_kind: str = "none",
 ) -> None:
     if iso:
         values_dtypes = iso_datatypes(values_dtypes)
     generated = data.draw(
         npy_inputs(
             shape=shape,
-            format=formats(ndim),
+            format=_custom_formats(ndim, format_kind),
             datatypes=datatypes(values_dtypes),
-            transpose=optional_transposes(ndim),
+            transpose=_custom_transposes(ndim, transpose_kind),
+            fill_value_kind=fill_value_kind,
         ),
         label="generated",
     )
     run_executables(generated, container_suffix=container_suffix)
 
 
+def _custom_formats(ndim: int, kind: str) -> st.SearchStrategy[dict]:
+    if ndim == 0:
+        return st.just(element)
+    if kind == "dense":
+        return st.just(dense(element, rank=ndim))
+    if kind == "coo":
+        return st.just(sparse(element, rank=ndim))
+    if kind == "mixed":
+        return formats(ndim)
+    raise ValueError(f"unknown custom format kind {kind!r}")
+
+
+def _custom_transposes(ndim: int, kind: str) -> st.SearchStrategy[tuple | None]:
+    if kind == "none":
+        return st.none()
+    if kind == "permuted":
+        return st.permutations(range(ndim)).map(tuple)
+    raise ValueError(f"unknown custom transpose kind {kind!r}")
+
+
 @pytest.mark.parametrize("container_suffix", CONTAINERS)
+@pytest.mark.parametrize("fill_value_kind", FILL_VALUE_KINDS)
 @pytest.mark.parametrize("iso", ISO)
 @pytest.mark.parametrize("values_dtypes", VALUE_DTYPE_STRATEGIES)
 @pytest.mark.parametrize("format_name", PREDEFINED_1D)
@@ -205,6 +290,7 @@ def test_predefined_1d(
     iso: bool,
     container_suffix: str,
     format_name: str,
+    fill_value_kind: str,
 ) -> None:
     if iso:
         values_dtypes = iso_datatypes(values_dtypes)
@@ -216,6 +302,7 @@ def test_predefined_1d(
             format_name=st.just(format_name),
             datatypes=datatypes(values_dtypes),
             transpose=st.just(transpose),
+            fill_value_kind=fill_value_kind,
         ),
         label="generated",
     )
@@ -223,6 +310,7 @@ def test_predefined_1d(
 
 
 @pytest.mark.parametrize("container_suffix", CONTAINERS)
+@pytest.mark.parametrize("fill_value_kind", FILL_VALUE_KINDS)
 @pytest.mark.parametrize("iso", ISO)
 @pytest.mark.parametrize("values_dtypes", VALUE_DTYPE_STRATEGIES)
 @pytest.mark.parametrize("format_name", PREDEFINED_2D)
@@ -234,6 +322,7 @@ def test_predefined_2d(
     iso: bool,
     container_suffix: str,
     format_name: str,
+    fill_value_kind: str,
 ) -> None:
     if iso:
         values_dtypes = iso_datatypes(values_dtypes)
@@ -245,6 +334,7 @@ def test_predefined_2d(
             format_name=st.just(format_name),
             datatypes=datatypes(values_dtypes),
             transpose=st.just(transpose),
+            fill_value_kind=fill_value_kind,
         ),
         label="generated",
     )
