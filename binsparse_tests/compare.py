@@ -97,10 +97,13 @@ def assert_containers_equal(
         raise AssertionError(f"{label} header differs:\n{difference}")
 
     for name in expected_contents.buffers:
+        data_type = expected_contents.header["data_types"][name]
+        if not isinstance(data_type, str):
+            raise AssertionError(f"{label} buffer {name!r} has invalid data type")
         _assert_array_equal(
             f"{label} buffer {name!r}",
-            actual_contents.buffers[name],
-            expected_contents.buffers[name],
+            _semantic_array(actual_contents.buffers[name], data_type),
+            _semantic_array(expected_contents.buffers[name], data_type),
         )
 
 
@@ -160,6 +163,14 @@ def _header_diff(
             lineterm="",
         )
     )
+
+
+def _semantic_array(array: np.ndarray, data_type: str) -> np.ndarray:
+    while data_type.startswith("iso[") and data_type.endswith("]"):
+        data_type = data_type[4:-1]
+    if data_type == "bint8":
+        return array.astype(np.bool_, copy=False)
+    return array
 
 
 def _assert_array_equal(name: str, actual: np.ndarray, expected: np.ndarray) -> None:

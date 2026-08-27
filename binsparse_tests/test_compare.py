@@ -22,7 +22,14 @@ def test_npz_headers_compare_as_json(tmp_path: Path) -> None:
     np.savez(actual, binsparse=json.dumps({"binsparse": HEADER}), values=VALUES)
     np.savez(
         expected,
-        binsparse=json.dumps({"binsparse": {"data_types": HEADER["data_types"], "format": "CSR"}}),
+        binsparse=json.dumps(
+            {
+                "binsparse": {
+                    "data_types": HEADER["data_types"],
+                    "format": "CSR",
+                }
+            }
+        ),
         values=VALUES,
     )
 
@@ -36,6 +43,43 @@ def test_buffer_difference_is_reported(tmp_path: Path) -> None:
     _write_npz(expected, np.asarray([1.0, 3.0]))
 
     with pytest.raises(AssertionError, match="values differ"):
+        assert_containers_equal(actual, expected)
+
+
+@pytest.mark.parametrize("data_type", ["bint8", "iso[bint8]"])
+def test_bint8_compares_as_numpy_boolean(tmp_path: Path, data_type: str) -> None:
+    h5py = pytest.importorskip("h5py")
+    header = {"format": "CSR", "data_types": {"values": data_type}}
+    actual = tmp_path / "actual.h5"
+    expected = tmp_path / "expected.npz"
+    with h5py.File(actual, "w") as file:
+        file.attrs["binsparse"] = json.dumps({"binsparse": header})
+        file.create_dataset("values", data=np.asarray([0, 1], dtype=np.uint8))
+    np.savez(
+        expected,
+        binsparse=json.dumps({"binsparse": header}),
+        values=np.asarray([False, True]),
+    )
+
+    assert_containers_equal(actual, expected)
+
+
+def test_non_bint8_still_requires_matching_dtype(tmp_path: Path) -> None:
+    header = {"format": "CSR", "data_types": {"values": "uint8"}}
+    actual = tmp_path / "actual.npz"
+    expected = tmp_path / "expected.npz"
+    np.savez(
+        actual,
+        binsparse=json.dumps({"binsparse": header}),
+        values=np.asarray([0, 1], dtype=np.uint8),
+    )
+    np.savez(
+        expected,
+        binsparse=json.dumps({"binsparse": header}),
+        values=np.asarray([0, 1], dtype=np.int8),
+    )
+
+    with pytest.raises(AssertionError, match="dtype mismatch"):
         assert_containers_equal(actual, expected)
 
 
