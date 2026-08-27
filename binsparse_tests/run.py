@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from binsparse import cli as reference_cli
+from reference_cli import converters as reference_cli
 
 from .compare import assert_containers_equal
 
