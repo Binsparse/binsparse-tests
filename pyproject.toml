@@ -4,14 +4,14 @@ name = "binsparse-tests"
 requires-python = ">=3.11"
 version = "0.1.0"
 dependencies = [
-    "numpy>=2.5.2,<3",
+    "numpy>=2,<3",
     "binsparse @ git+https://github.com/Binsparse/binsparse-reference-python",
     "hypothesis>=6.165.10,<7",
 ]
 
 [project.optional-dependencies]
 hdf5 = ["h5py>=3.16.0,<4"]
-zarr = ["zarr>=3.3.0,<4"]
+zarr = ["zarr>=3.0.8,<4"]
 
 scipy = ["scipy"]
 torch = ["torch"]
@@ -38,7 +38,7 @@ hdf5=[
     "h5py>=3.16.0,<4",
 ]
 zarr=[
-    "zarr>=3.3.0,<4",
+    "zarr>=3.0.8,<4",
 ]
 
 [tool.pixi.workspace]
