@@ -1187,11 +1187,11 @@ packages:
 - pypi: ./
   name: binsparse-tests
   requires_dist:
-  - numpy>=2.5.2,<3
+  - numpy>=2,<3
   - binsparse @ git+https://github.com/Binsparse/binsparse-reference-python
   - hypothesis>=6.165.10,<7
   - h5py>=3.16.0,<4 ; extra == 'hdf5'
-  - zarr>=3.3.0,<4 ; extra == 'zarr'
+  - zarr>=3.0.8,<4 ; extra == 'zarr'
   - scipy ; extra == 'scipy'
   - torch ; extra == 'torch'
   - sparse ; extra == 'sparse'
