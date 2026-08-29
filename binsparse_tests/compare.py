@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+from semver import Version
 
 
 @dataclass(frozen=True)
@@ -110,7 +111,7 @@ def assert_containers_equal(
     actual_contents = read_container(actual)
     expected_contents = read_container(expected)
 
-    if actual_contents.header != expected_contents.header:
+    if not _headers_equal(actual_contents.header, expected_contents.header):
         difference = _header_diff(actual_contents.header, expected_contents.header)
         raise AssertionError(f"{label} header differs:\n{difference}")
 
@@ -166,6 +167,33 @@ def _header_diff(
             lineterm="",
         )
     )
+
+
+def _headers_equal(actual: Mapping[str, Any], expected: Mapping[str, Any]) -> bool:
+    if actual == expected:
+        return True
+
+    actual_header = dict(actual)
+    expected_header = dict(expected)
+    actual_version = actual_header.pop("version", None)
+    expected_version = expected_header.pop("version", None)
+    if actual_header != expected_header:
+        return False
+    return _versions_compatible(actual_version, expected_version)
+
+
+def _versions_compatible(actual: object, expected: object) -> bool:
+    if actual == expected:
+        return True
+    if not isinstance(actual, str) or not isinstance(expected, str):
+        return False
+    try:
+        actual_version = Version.parse(actual)
+        expected_version = Version.parse(expected)
+    except ValueError:
+        return False
+
+    return expected_version.is_compatible(actual_version)
 
 
 def _assert_array_equal(name: str, actual: np.ndarray, expected: np.ndarray) -> None:

@@ -8,12 +8,16 @@ import pytest
 
 from .compare import assert_containers_equal, read_container
 
-HEADER = {"format": "CSR", "data_types": {"values": "float64"}}
+HEADER = {"version": "0.1.0", "format": "CSR", "data_types": {"values": "float64"}}
 VALUES = np.asarray([1.0, np.nan, 3.0])
 
 
-def _write_npz(path: Path, values: np.ndarray = VALUES) -> None:
-    np.savez(path, binsparse=json.dumps({"binsparse": HEADER}), values=values)
+def _write_npz(
+    path: Path,
+    values: np.ndarray = VALUES,
+    header: dict[str, object] | None = None,
+) -> None:
+    np.savez(path, binsparse=json.dumps({"binsparse": header or HEADER}), values=values)
 
 
 def test_npz_headers_compare_as_json(tmp_path: Path) -> None:
@@ -27,6 +31,7 @@ def test_npz_headers_compare_as_json(tmp_path: Path) -> None:
                 "binsparse": {
                     "data_types": HEADER["data_types"],
                     "format": "CSR",
+                    "version": "0.1.0",
                 }
             }
         ),
@@ -43,6 +48,43 @@ def test_buffer_difference_is_reported(tmp_path: Path) -> None:
     _write_npz(expected, np.asarray([1.0, 3.0]))
 
     with pytest.raises(AssertionError, match="values differ"):
+        assert_containers_equal(actual, expected)
+
+
+@pytest.mark.parametrize("version", ["0.1.0+roundtrip.1"])
+def test_semver_header_difference_is_compatible(
+    tmp_path: Path, version: str
+) -> None:
+    actual = tmp_path / "actual.npz"
+    expected = tmp_path / "expected.npz"
+    _write_npz(actual, header={**HEADER, "version": version})
+    _write_npz(expected)
+
+    assert_containers_equal(actual, expected)
+
+
+@pytest.mark.parametrize(
+    "version",
+    [
+        "0.1.0-alpha.1",
+        "0.1.1",
+        "0.1.42+roundtrip.1",
+        "0.2.0-alpha.1",
+        "0.2.0",
+        "1.0.0",
+        "0.1",
+        "01.1.0",
+    ],
+)
+def test_breaking_or_invalid_semver_header_difference_is_reported(
+    tmp_path: Path, version: str
+) -> None:
+    actual = tmp_path / "actual.npz"
+    expected = tmp_path / "expected.npz"
+    _write_npz(actual, header={**HEADER, "version": version})
+    _write_npz(expected)
+
+    with pytest.raises(AssertionError, match="header differs"):
         assert_containers_equal(actual, expected)
 
 

@@ -5,7 +5,7 @@ import numpy as np
 from hypothesis import assume
 from hypothesis import strategies as st
 
-VERSION = "0.1"
+VERSION = "0.1.0"
 NO_FORMAT_NAME = st.none()
 INT64_DATATYPE = st.just("int64")
 NO_TRANSPOSE = st.none()
