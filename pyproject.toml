@@ -8,6 +8,7 @@ dependencies = [
     "binsparse @ git+https://github.com/Binsparse/binsparse-reference-python",
     "hypothesis>=6.165.10,<7",
     "semver>=3,<4",
+    "jsonschema>=4",
 ]
 
 [project.optional-dependencies]
