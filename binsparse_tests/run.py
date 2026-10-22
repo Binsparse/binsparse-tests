@@ -13,7 +13,7 @@ from typing import Any
 import numpy as np
 from reference_cli import converters as reference_cli
 
-from .compare import assert_containers_equal
+from .compare import assert_containers_equal, assert_header_valid, read_container
 
 Command = str | Sequence[str]
 GeneratedInput = tuple[np.ndarray, np.ndarray, Any, Mapping[str, Any]]
@@ -223,6 +223,7 @@ def _assert_binsparse_equal(
     actual: Path,
     expected: Path,
 ) -> None:
+    assert_header_valid(read_container(actual).header, label=name)
     assert_containers_equal(actual, expected, label=name)
 
 

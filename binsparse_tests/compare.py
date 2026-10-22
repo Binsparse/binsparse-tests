@@ -3,16 +3,24 @@
 from __future__ import annotations
 
 import json
+import urllib.request
 from abc import ABC, abstractmethod
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from difflib import unified_diff
+from functools import cache
 from pathlib import Path
 from typing import Any
 
+import jsonschema
 import numpy as np
 from semver import Version
+
+SCHEMA_URL = (
+    "https://raw.githubusercontent.com/ilan-gold/binsparse-specification/"
+    "json_schema/spec/draft/schema.json"
+)
 
 
 @dataclass(frozen=True)
@@ -123,6 +131,22 @@ def assert_containers_equal(
         )
 
 
+def assert_header_valid(header: Mapping[str, Any], *, label: str) -> None:
+    """Assert that a Binsparse header conforms to the specification's JSON schema."""
+    if header.get("format") == "custom":
+        return
+    try:
+        jsonschema.validate({"binsparse": header}, _schema())
+    except jsonschema.ValidationError as error:
+        raise AssertionError(f"{label} header violates schema: {error}") from error
+
+
+@cache
+def _schema() -> dict[str, Any]:
+    with urllib.request.urlopen(SCHEMA_URL) as response:
+        return json.load(response)
+
+
 def read_container(path: str | Path) -> ContainerContents:
     """Read the relevant content of an NPZ, Zarr, or HDF5 container."""
     with open_container(path) as container:
@@ -216,6 +240,7 @@ __all__ = [
     "NPZContainer",
     "ZarrContainer",
     "assert_containers_equal",
+    "assert_header_valid",
     "open_container",
     "read_container",
 ]
